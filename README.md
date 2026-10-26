@@ -1,95 +1,32 @@
-# Capstone_iitg
-Real-Time Dynamic Parking Pricing
-This project uses Pathway, a real-time data processing tool, to calculate dynamic parking prices based on current demand and other real-world factors like traffic, queue length, and vehicle type.
+# Dynamic parking pricing experiments
 
- What This Project Does
-Reads parking data from a CSV file (simulated as if it's streaming)
+`Capstone (2).ipynb` studies two pandas pricing heuristics for parking occupancy and demand. It also preserves an unfinished Pathway streaming experiment. These are exploratory models, without evidence of real-world congestion or revenue improvements.
 
-Combines date and time into a proper timestamp
+## Run the pandas models
 
-Calculates demand using a formula
+Use Python 3.11+, install `requirements.txt` in a virtual environment, and run:
 
-Sets prices dynamically based on the demand score
+```sh
+jupyter lab "Capstone (2).ipynb"
+```
 
-Outputs the results into a .jsonl file for visualization or analysis
+Provide `data/dataset.csv`, or set `PARKING_CSV` to your CSV path. Run the first four code cells in order, stopping at **Historical streaming and visualization experiments**. Model 1 lowercases columns; model 2 reloads the original case-sensitive CSV. The dataset is not included.
 
- Data Columns Used
-From the dataset, we use:
+| Column | Meaning |
+| --- | --- |
+| `SystemCodeNumber` | Parking-lot identifier |
+| `LastUpdatedDate`, `LastUpdatedTime` | Day-first date and time |
+| `Occupancy`, `Capacity` | Occupied spaces and positive total spaces |
+| `QueueLength`, `TrafficConditionNearby` | Numeric queue and traffic indicators |
+| `IsSpecialDay` | Numeric event flag |
+| `VehicleType` | `car`, `bike` or `truck`; unknown values use weight 1 |
 
-Column	Description
-Occupancy	How many spots are currently filled
-Capacity	Total number of spots
-QueueLength	Number of vehicles waiting
-TrafficConditionNearby	Traffic score near the lot
-IsSpecialDay	1 if there's a holiday/event
-VehicleType	car, bike, or truck
-LastUpdatedDate + LastUpdatedTime	Combined into a timestamp
+Model 1 uses `10 + 5 × Occupancy / Capacity`, clipped to [5,20]. Model 2 combines occupancy, normalized queue/traffic, special-day status and vehicle weights (car 1, bike 0.5, truck 1.5), min-max normalizes demand and computes `10 × (1 + normalized_demand)`, clipped to [5,20]. Constant demand maps to the base price rather than NaN. Currency units are illustrative.
 
- Demand Function (Core Formula)
-We use a weighted formula to calculate a "demand score" for each lot, each moment:
+## Verification and limitations
 
-makefile
-Copy
-Edit
-demand = 
-    1.0 × (Occupancy / Capacity) +
-    0.7 × (QueueLength / max_queue) -
-    0.4 × (Traffic / max_traffic) +
-    0.6 × IsSpecialDay +
-    0.3 × VehicleWeight
-VehicleWeight is:
+Install `pytest`, then run `python -m pytest -q`. Synthetic-data tests execute the actual pandas model cells and check constant demand and invalid capacity. CI does not require parking data, Colab or Pathway.
 
-1.0 for car
+The later Pathway 0.24.1 prototype is incomplete: `source` is undefined, its table-universe operation needs review, and its output lacks the `ts`/`diff` fields expected by the historical Bokeh chart. Installing Pathway alone will not make that section runnable. The chart now preserves constant measured values without adding random variation. Original cells and recorded outputs remain available as historical work; no streaming execution is claimed.
 
-0.8 for bike
-
-1.5 for truck
-
-The score is clipped between 0 and 2.
-
- Price Calculation
-We set prices based on demand using this formula:
-
-ini
-Copy
-Edit
-price = 10 × (1 + 0.4 × demand)
-If demand is 0 → price = ₹10
-
-If demand is 2 → price = ₹18
-
-The higher the demand, the higher the price.
-
-This lets prices adapt in real-time as traffic, queue, and occupancy change.
-
-🛠 How It Works
-CSV is loaded using Pathway.
-
-A timestamp column is created by combining date and time.
-
-Max queue and traffic values are calculated for normalization.
-
-We compute demand and price.
-
-Results are saved into output.jsonl — one row per update.
-
-📤 Output Example
-json
-Copy
-Edit
-{
-  "ts": "2016-12-01 10:45:00",
-  "lot_id": "BHMMBMMBX01",
-  "demand": 1.4,
-  "price": 15.6
-}
- Summary
-This project simulates how cities can:
-
-Set fair and responsive parking prices
-
-Reduce traffic and waiting time
-
-Encourage smarter use of parking spots
-
-It shows how even simple formulas can support smart city infrastructure using real-time data.
+Both pandas models normalize using the whole supplied batch. This is descriptive batch analysis, not a validated online forecaster; temporal evaluation and calibration remain future work.
