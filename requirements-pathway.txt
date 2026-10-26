@@ -1,0 +1,2 @@
+# Optional Linux/macOS streaming runtime; independent of the pandas notebook.
+pathway==0.33.0

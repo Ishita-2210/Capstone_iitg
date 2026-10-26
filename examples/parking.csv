@@ -1,0 +1,5 @@
+SystemCodeNumber,LastUpdatedDate,LastUpdatedTime,Occupancy,Capacity,QueueLength,TrafficConditionNearby,IsSpecialDay,VehicleType
+SYNTHETIC-A,01-12-2016,09:00:00,10,100,0,0,0,car
+SYNTHETIC-A,01-12-2016,10:00:00,80,100,5,2,1,car
+SYNTHETIC-B,01-12-2016,09:00:00,100,100,10,0,1,truck
+SYNTHETIC-B,01-12-2016,10:00:00,0,100,0,5,0,bike
